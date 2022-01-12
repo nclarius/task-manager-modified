@@ -4,12 +4,11 @@ This is a modification of KDE’s [task manager applet](https://github.com/KDE/p
 
 - make the indicators in the task bar visually more minimal and look like tabs (no background color, no indicator except for active tab, invert indicator position)
 - make it properly centrable (the original has some protruding space causing the visible entries to be shifted off-center)
-- strip the labels down to bare file names (in particular, remove application names)
+- strip the labels down to bare file names (remove application names and file endings)
 - center the labels in the entry and elide (…) long labels in the middle instead of the end
 - add more window controls in the tool tip
 - restore the behavior of previous versions where hovering an entry shows a semi-translucent full-screen preview of the window, and remove the small thumbnails
 - abuse the “switch to x-th window” function to enable cycling windows in the order in which they appear in the task bar
-- dim labels of inactive tasks for better contrast with the active task
 - and possibly some other small cosmetic changes I forgot to list.
 
 You can diff my fork against the [main branch](https://github.com/KDE/plasma-desktop/tree/master/applets/taskmanager) and cherry-pick your own combination with the changes you’d like to have.
