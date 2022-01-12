@@ -1,6 +1,6 @@
 # Task Manager Modified
 
-This is a modification of KDE’s [task manager applet](https://github.com/KDE/plasma-desktop/tree/master/applets/taskmanager) with a bunch of dirty hacks to:
+This is a fork of KDE’s [task manager applet](https://github.com/KDE/plasma-desktop/tree/master/applets/taskmanager) with a bunch of dirty hacks to:
 
 - make the indicators in the task bar visually more minimal and look like tabs (no background color, no indicator except for active tab, invert indicator position)
 - make it properly centrable (the original has some protruding space causing the visible entries to be shifted off-center)
