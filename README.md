@@ -35,7 +35,7 @@ You can diff my fork against the [main branch](https://github.com/KDE/plasma-des
    plasmashell --replace &&
    ````
 
-4. Add the modified version to your panel: right-click on panel > *Edit panel* > *Add widgets …* > select *Task Manager Classic Modified*
+4. Add the modified version to your panel: right-click on panel > *Edit panel* > *Add widgets …* > select *Task Manager Modified*
 
 ### Style
 
