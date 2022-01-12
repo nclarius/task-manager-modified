@@ -21,7 +21,6 @@ import QtQuick 2.0
 
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 2.0 as PlasmaComponents
-import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.draganddrop 2.0
 
 import org.kde.plasma.private.taskmanager 0.1 as TaskManagerApplet
@@ -76,6 +75,11 @@ MouseArea {
     readonly property bool highlighted: (inPopup && activeFocus) || (!inPopup && containsMouse)
         || (task.contextMenu && task.contextMenu.status === PlasmaComponents.DialogStatus.Open)
         || (groupDialog.visible && groupDialog.visualParent === task)
+        
+    onHighlightedChanged: {
+        // ensure it doesn't get stuck with a window highlighted
+        backend.cancelHighlightWindows();
+    }
 
     function showToolTip() {
         toolTipArea.showToolTip();
@@ -129,10 +133,6 @@ MouseArea {
             }
         } else {
             pressed = false;
-        }
-
-        if (model.IsWindow === true) {
-            tasks.windowsHovered(model.WinIdList, containsMouse);
         }
     }
 
@@ -288,7 +288,7 @@ MouseArea {
     Connections {
         target: pulseAudio.item
         ignoreUnknownSignals: true // Plasma-PA might not be available
-        function onStreamsChanged() {
+        function onStreamsChanged() { 
             task.updateAudioStreams({delay: true})
         }
     }
@@ -323,10 +323,10 @@ MouseArea {
         anchors {
             fill: parent
 
-            topMargin: (!tasks.vertical && taskList.rows > 1) ? PlasmaCore.Units.smallSpacing / 4 : 4
-            bottomMargin: (!tasks.vertical && taskList.rows > 1) ? PlasmaCore.Units.smallSpacing / 4 : 4
-            leftMargin: ((inPopup || tasks.vertical) && taskList.columns > 1) ? PlasmaCore.Units.smallSpacing / 4 : 1
-            rightMargin: ((inPopup || tasks.vertical) && taskList.columns > 1) ? PlasmaCore.Units.smallSpacing / 4 : 1
+            topMargin: (!tasks.vertical && taskList.rows > 1) ? PlasmaCore.Units.smallSpacing / 4 : 0
+            bottomMargin: (!tasks.vertical && taskList.rows > 1) ? PlasmaCore.Units.smallSpacing / 4 : 0
+            leftMargin: ((inPopup || tasks.vertical) && taskList.columns > 1) ? PlasmaCore.Units.smallSpacing / 4 : 0
+            rightMargin: ((inPopup || tasks.vertical) && taskList.columns > 1) ? PlasmaCore.Units.smallSpacing / 4 : 0
         }
 
         imagePath: "widgets/tasks"
@@ -340,7 +340,6 @@ MouseArea {
             anchors.fill: parent
             location: plasmoid.location
 
-            // active: false
             active: !inPopup && !groupDialog.visible && plasmoid.configuration.showToolTips
             interactive: true
 
@@ -416,14 +415,12 @@ MouseArea {
             left: parent.left
             leftMargin: adjustMargin(true, parent.width, taskFrame.margins.left)
             top: parent.top
-            topMargin: adjustMargin(false, parent.height, taskFrame.margins.top) + 4
-            bottom: parent.bottom
-            bottomMargin: adjustMargin(false, parent.height, taskFrame.margins.top) + 2
+            topMargin: adjustMargin(false, parent.height, taskFrame.margins.top)
         }
 
         width: height
         height: (parent.height - adjustMargin(false, parent.height, taskFrame.margins.top)
-            - adjustMargin(false, parent.height, taskFrame.margins.bottom) - 4)
+            - adjustMargin(false, parent.height, taskFrame.margins.bottom))
 
         function adjustMargin(vert, size, margin) {
             if (!size) {
@@ -482,7 +479,7 @@ MouseArea {
                     target: iconBox
                     anchors.leftMargin: 0
                     width: parent.width - adjustMargin(true, task.width, taskFrame.margins.left)
-                                        - adjustMargin(true, task.width, taskFrame.margins.right) - 4
+                                        - adjustMargin(true, task.width, taskFrame.margins.right)
                 }
             }
         ]
@@ -528,92 +525,18 @@ MouseArea {
         anchors {
             fill: parent
             leftMargin: taskFrame.margins.left + iconBox.width + PlasmaCore.Units.smallSpacing
-            topMargin: taskFrame.margins.top + 2
+            topMargin: taskFrame.margins.top
             rightMargin: taskFrame.margins.right + (audioStreamIconLoader.shown ? (audioStreamIconLoader.width + PlasmaCore.Units.smallSpacing) : 0)
             bottomMargin: taskFrame.margins.bottom
         }
 
-        text: generateTitle()
-        elide: Text.ElideMiddle
+        text: model.display
+        wrapMode: (maximumLineCount == 1) ? Text.NoWrap : Text.Wrap
+        elide: Text.ElideRight
         textFormat: Text.PlainText
         verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
         maximumLineCount: plasmoid.configuration.maxTextLines || undefined
-        color: "#A0A0A0"
-
-        function generateTitle() {
-            var text = model.display;
-
-            // KWin appends increasing integers in between pointy brackets to otherwise equal window titles.
-            // In this case save <#number> as counter and delete it at the end of text.
-            var counter = text.match(/<\d+>\W*$/);
-            text = text.replace(/\s*<\d+>\W*$/, "");
-
-            // Remove appName from the end of text.
-            var appNameRegex = new RegExp(appName + "$", "i");
-            text = text.replace(appNameRegex, "");
-            text = text.replace(/\s*(?:-|—|–|—|⸺|\|)*\s*$/, ""); // application name
-            text = text.replace(" - Mozilla", "");
-            text = text.replace("— Mozilla", "");
-            text = text.replace("Mozilla", "");
-            text = text.replace(" : bash", "");
-            text = text.replace(" : xonsh", "");
-            text = text.replace(" - Privat", "");
-            text = text.replace(" - Uni", "");
-            text = text.replace(" - Local", "");
-            text = text.replace(" ⸺", "");
-            // var path_atom = text.match(/\s—\s((~|\/).*)/)[1];
-            text = text.replace(/\s—\s(~|\/).*/, ""); // path in atom
-            // var path_kate = text.match(/((~|\/).*\/)([\w\-]+\.\w+)/)[2];
-            text = text.replace(/((~|\/).*\/)([\w\-]+\.\w+)/, "$3"); // path in kate
-            // var path_dolphin = text.match(/^(.*\/)([^\/]+)$/)[1];
-            text = text.replace(/^(.*\/)([^\/]+)$/, "$2"); // path in dolphin
-            text = text.replace(/•?(\s\*)?\s*$/, ""); // modification indicator
-            text = text.replace(/(.+)(\.[A-Za-z][A-Za-z][A-Za-z]?[A-Za-z]?)/, "$1"); // file ending
-
-            // add whitespace
-            if (text.length * 6.5 < frame.width - 3 * iconBox.width) {
-              text = text + "          "
-            }
-
-            // Add counter back at the end.
-            // if (counter !== null) {
-                // if (text === "") {
-                    // text = counter;
-                // } else {
-                    // text = text + " " + counter;
-                // }
-            // }
-
-            // In case the window title had only redundant information (i.e. appName), text is now empty.
-            // Add a hyphen to indicate that and avoid empty space.
-            // if (text === "") {
-                // text = "—";
-            // }
-            return text.toString();
-        }
     }
-    //
-    // // close button
-    // PlasmaComponents3.ToolButton {
-    //     id: closeButton
-    //     // Layout.alignment: Qt.AlignRight | Qt.AlignTop
-    //     visible: model.IsWindow === true && model.isLauncher !== true
-    //     opacity: model.isActive ? 1 : 0.25
-    //     icon.name: "window-close"
-    //
-    //     anchors {
-    //         right: frame.right
-    //         top: frame.top
-    //         rightMargin: taskFrame.margins.right
-    //         topMargin: Math.round(taskFrame.margins.top * indicatorScale)
-    //     }
-    //
-    //     onClicked: {
-    //         backend.cancelHighlightWindows();
-    //         tasksModel.requestClose(modelIndex());
-    //     }
-    // }
 
     states: [
         State {
@@ -624,10 +547,6 @@ MouseArea {
                 target: frame
                 basePrefix: ""
             }
-            // PropertyChanges {
-            //   target: label
-            //   color: "#A0A0A0"
-            // }
         },
         State {
             name: "attention"
@@ -637,10 +556,6 @@ MouseArea {
                 target: frame
                 basePrefix: "attention"
             }
-            // PropertyChanges {
-            //   target: label
-            //   color: "#A0A0A0"
-            // }
         },
         State {
             name: "minimized"
@@ -650,10 +565,6 @@ MouseArea {
                 target: frame
                 basePrefix: "minimized"
             }
-            // PropertyChanges {
-            //   target: label
-            //   color: "#A0A0A0"
-            // }
         },
         State {
             name: "active"
@@ -663,15 +574,6 @@ MouseArea {
                 target: frame
                 basePrefix: "focus"
             }
-            // PropertyChanges {
-            //   target: label
-            //   color: "#000000"
-            // }
-
-            // PropertyChanges {
-            //   target: label
-            //   color: "#ffffff"
-            // }
         }
     ]
 

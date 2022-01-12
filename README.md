@@ -2,6 +2,7 @@
 
 This is a modification of KDE’s [task manager applet](https://github.com/KDE/plasma-desktop/tree/master/applets/taskmanager) with a bunch of dirty hacks to:
 
+- make the indicators in the task bar visually more minimal and look like tabs (no background color, no indicator except for active tab, invert indicator position)
 - make it properly centrable (the original has some protruding space causing the visible entries to be shifted off-center)
 - strip the labels down to bare file names (in particular, remove application names)
 - center the labels in the entry and elide (…) long labels in the middle instead of the end
@@ -11,11 +12,13 @@ This is a modification of KDE’s [task manager applet](https://github.com/KDE/p
 - dim labels of inactive tasks for better contrast with the active task
 - and possibly some other small cosmetic changes I forgot to list.
 
-You can diff my fork against the main branch and cherry-pick your own combination with the changes you’d like to have.
+You can diff my fork against the [main branch](https://github.com/KDE/plasma-desktop/tree/master/applets/taskmanager) and cherry-pick your own combination with the changes you’d like to have.
 
 ![screenshot](screenshot.png)
 
 ## Installation
+
+### Applet
 
 1. Download: GitHub repo > green top right button *Code* > *Download ZIP* > unpack and extract the `task-manager-modified` folder
 
@@ -34,4 +37,11 @@ You can diff my fork against the main branch and cherry-pick your own combinatio
    ````
 
 4. Add the modified version to your panel: right-click on panel > *Edit panel* > *Add widgets …* > select *Task Manager Classic Modified*
+
+### Style
+
+1. Find your currently used theme (e.g. `breeze-light`) in either `~/.local/share/plasma/desktoptheme/` or `/usr/share/plasma/desktoptheme/` and create a copy in `~/.local/share/plasma/desktoptheme/`
+2. Give the theme a new name: as the folder name, in `metadata.desktop`: `Name` and in `metadata.desktop`: `X-KDE-PluginInfo-Name`
+3. Replace `widgets/tasks.svgz` with the `tasks.svgz` from this repository
+4. Apply the theme via system settings
 
